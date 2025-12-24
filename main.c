@@ -4,7 +4,9 @@
 #include <sys/types.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <sys/socket.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 int main () {
 	int status;
@@ -16,25 +18,32 @@ int main () {
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	
-	if ((status = getaddrinfo(NULL, "3500", &hints, &servinfo)) != 0) {
+	if ((status = getaddrinfo(NULL, "8080", &hints, &servinfo)) != 0) {
 		fprintf(stderr, "Gai error: %s\n", gai_strerror(status));
 		exit(1);
 	}
 
-	char ip_address[INET_ADDRSTRLEN];
+	int socket_fd;
 
-	struct addrinfo *p;
+	socket_fd = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
 
-	for (p = servinfo; p != NULL; p = p->ai_next) {
-		
-		struct sockaddr_in *ipv4;
-		
-		ipv4 = (struct sockaddr_in *)p->ai_addr;
+	bind(socket_fd, servinfo->ai_addr, servinfo->ai_addrlen);
+	
+	listen(socket_fd, 5);
 
-		inet_ntop(AF_INET, &(ipv4->sin_addr), ip_address, INET_ADDRSTRLEN);
+	struct sockaddr_storage client_addr;
+	socklen_t addr_size;
+	int client_fd;
 
-		printf("%s\n", ip_address);
-	}
+	addr_size = sizeof client_addr;
+
+	client_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &addr_size);
+
+	printf("Connection established!\n");
+
+	close(client_fd);
+
+	close(socket_fd);
 
 	freeaddrinfo(servinfo);
 }
