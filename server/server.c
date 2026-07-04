@@ -12,7 +12,7 @@ int main () {
     int sockfd;
     struct sockaddr_in my_addr;
     
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    sockfd = socket(PF_INET, SOCK_STREAM, 0);
 
     my_addr.sin_family = AF_INET;
     my_addr.sin_port = htons(8080);
@@ -32,6 +32,10 @@ int main () {
 	client_fd = accept(sockfd, (struct sockaddr *)&client_addr, &addr_size);
 
 	printf("Connection established!\n");
+
+	send(client_fd, "Hello from server", 17, 0);
+
+	printf("hello message sent\n");
 
 	close(client_fd);
 
