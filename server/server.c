@@ -8,9 +8,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define MAX_LENGTH 4096
+
 int main () {
+	int yes = 1;
     int sockfd;
     struct sockaddr_in my_addr;
+	char buffer[MAX_LENGTH];
     
     sockfd = socket(PF_INET, SOCK_STREAM, 0);
 
@@ -20,6 +24,8 @@ int main () {
     memset(my_addr.sin_zero, '\0', sizeof my_addr.sin_zero);
 
 	bind(sockfd, (struct sockaddr *)&my_addr, sizeof my_addr);
+
+	printf("Waiting for connection...\n");
 	
 	listen(sockfd, 5);
 
@@ -31,13 +37,35 @@ int main () {
 
 	client_fd = accept(sockfd, (struct sockaddr *)&client_addr, &addr_size);
 
-	printf("Connection established!\n");
+	printf("Connection established!\nYou are now chatting. Type '/exit' to quit.\n");
 
-	send(client_fd, "Hello from server", 17, 0);
+	while(1) {
+		char *buff_pointer;
 
-	printf("hello message sent\n");
+		printf("> ");
+
+		fgets(buffer, MAX_LENGTH, stdin);
+
+		//buffer[strcspn(buffer, "\n") = '\0']
+
+		if (strncmp(buffer, "/exit", 5) == 0 || buff_pointer == NULL) {
+			printf("Exiting program...\n");
+			break;
+		}
+
+		send(client_fd, buffer, MAX_LENGTH, 0);
+
+		printf("Message sent.\n");
+
+	}
+
+	//send(client_fd, "Hello from server", 17, 0);
+
+	//printf("hello message sent\n");
 
 	close(client_fd);
 
 	close(sockfd);
+
+	return 0;
 }
