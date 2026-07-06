@@ -40,15 +40,16 @@ int main () {
 	printf("Connection established!\nYou are now chatting. Type '/exit' to quit.\n");
 
 	while(1) {
-		char *buff_pointer;
-
 		printf("> ");
 
-		fgets(buffer, MAX_LENGTH, stdin);
+		if (fgets(buffer, MAX_LENGTH, stdin) == NULL) {
+			printf("Exiting program...\n");
+			break;
+		}
 
 		//buffer[strcspn(buffer, "\n") = '\0']
 
-		if (strncmp(buffer, "/exit", 5) == 0 || buff_pointer == NULL) {
+		if (strncmp(buffer, "/exit", 5) == 0) {
 			printf("Exiting program...\n");
 			break;
 		}
@@ -58,11 +59,7 @@ int main () {
 		printf("Message sent.\n");
 
 	}
-
-	//send(client_fd, "Hello from server", 17, 0);
-
-	//printf("hello message sent\n");
-
+	
 	close(client_fd);
 
 	close(sockfd);

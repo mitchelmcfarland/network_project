@@ -41,8 +41,8 @@ int main () {
             printf("Lost connection to the host.\n");
             break;
         }
-
-        printf("%s\n", buffer);
+        
+        printf("%s", buffer);
     }
 
     close(sockfd);
