@@ -40,16 +40,15 @@ int main () {
 	printf("Connection established!\nYou are now chatting. Type '/exit' to quit.\n");
 
 	while(1) {
+		char *buff_pointer;
+
 		printf("> ");
 
-		if (fgets(buffer, MAX_LENGTH, stdin) == NULL) {
-			printf("Exiting program...\n");
-			break;
-		}
+		buff_pointer = fgets(buffer, MAX_LENGTH, stdin);
 
 		//buffer[strcspn(buffer, "\n") = '\0']
 
-		if (strncmp(buffer, "/exit", 5) == 0) {
+		if (strncmp(buffer, "/exit", 5) == 0 || buff_pointer == NULL) {
 			printf("Exiting program...\n");
 			break;
 		}
