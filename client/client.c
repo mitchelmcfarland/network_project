@@ -9,24 +9,25 @@
 #include <unistd.h>
 #include <poll.h>
 
-#define MAX_LENGTH 4096
+#define MAX_MESSAGE_LEN 4096
+#define PFDS_LEN 2
 
 int main () {
-    int sockfd;
+    int client_fd;
     struct sockaddr_in my_addr;
     int status;
-    char buffer[MAX_LENGTH];
-    char exit_buf[7];
-    struct pollfd pfds[2];
+    char recv_buf[MAX_MESSAGE_LEN];
+    char send_buf[MAX_MESSAGE_LEN];
+    struct pollfd pfds[PFDS_LEN];
     
-    sockfd = socket(PF_INET, SOCK_STREAM, 0);
+    client_fd = socket(PF_INET, SOCK_STREAM, 0);
 
     my_addr.sin_family = AF_INET;
     my_addr.sin_port = htons(8080);
     my_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     memset(my_addr.sin_zero, '\0', sizeof my_addr.sin_zero);
 
-    status = connect(sockfd, (struct sockaddr *)&my_addr, sizeof my_addr);
+    status = connect(client_fd, (struct sockaddr *)&my_addr, sizeof my_addr);
     
     if (status < 0) {
         perror("Connection failed");
@@ -35,7 +36,7 @@ int main () {
 
     pfds[0].fd = STDIN_FILENO;
     pfds[0].events = POLLIN;
-    pfds[1].fd = sockfd;
+    pfds[1].fd = client_fd;
     pfds[1].events = POLLIN;
 
     printf("Connection established.\n");
@@ -43,31 +44,35 @@ int main () {
     while (1) {
         int conn;
         int poll_count;
-        char *buff_pointer;
+        char *send_buf_status;
 
         poll_count = poll(pfds, 2, -1);
 
         if (poll_count > 0) {
             if (pfds[1].revents & POLLIN) {
-                conn = recv(sockfd, buffer, MAX_LENGTH, 0);
-                printf("%s", buffer);
+                conn = recv(client_fd, recv_buf, MAX_MESSAGE_LEN - 1, 0);
+
+                if (conn == 0) {  //only check conn if you actually set it
+                    printf("Lost connection to the host.\n");
+                    break;
+                }
+
+                printf("%s", recv_buf);
             }
 
             if (pfds[0].revents & POLLIN) {
-                buff_pointer = fgets(exit_buf, 7, stdin);
+                send_buf_status = fgets(send_buf, MAX_MESSAGE_LEN - 1, stdin);
+
+                if (strncmp(send_buf, "/exit", 5) == 0 || send_buf_status == NULL) { //same thing, only check what fgets returns if you actually set it
+                    printf("Exiting program...\n");
+                    break;
+                }
+
+                printf("%s", send_buf);
+
             }
-        }
-
-        if (strncmp(exit_buf, "/exit", 5) == 0 || buff_pointer == NULL) {
-			printf("Exiting program...\n");
-			break;
-		}
-
-        if (conn == 0) {
-            printf("Lost connection to the host.\n");
-            break;
         }
     }
 
-    close(sockfd);
+    close(client_fd);
 }

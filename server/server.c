@@ -8,13 +8,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define MAX_LENGTH 4096
+#define MAX_MESSAGE_LEN 4096
 
 int main () {
 	//int yes = 1;
     int sockfd;
     struct sockaddr_in my_addr;
-	char buffer[MAX_LENGTH];
+	char buffer[MAX_MESSAGE_LEN];
     
     sockfd = socket(PF_INET, SOCK_STREAM, 0);
 
@@ -44,7 +44,7 @@ int main () {
 
 		printf("> ");
 
-		buff_pointer = fgets(buffer, MAX_LENGTH, stdin);
+		buff_pointer = fgets(buffer, MAX_MESSAGE_LEN, stdin);
 
 		//buffer[strcspn(buffer, "\n") = '\0'];
 
@@ -53,7 +53,7 @@ int main () {
 			break;
 		}
 
-		send(client_fd, buffer, MAX_LENGTH, 0);
+		send(client_fd, buffer, MAX_MESSAGE_LEN, 0);
 
 		printf("Message sent.\n");
 
