@@ -11,7 +11,7 @@
 #define MAX_LENGTH 4096
 
 int main () {
-	int yes = 1;
+	//int yes = 1;
     int sockfd;
     struct sockaddr_in my_addr;
 	char buffer[MAX_LENGTH];
@@ -46,7 +46,7 @@ int main () {
 
 		buff_pointer = fgets(buffer, MAX_LENGTH, stdin);
 
-		//buffer[strcspn(buffer, "\n") = '\0']
+		//buffer[strcspn(buffer, "\n") = '\0'];
 
 		if (strncmp(buffer, "/exit", 5) == 0 || buff_pointer == NULL) {
 			printf("Exiting program...\n");

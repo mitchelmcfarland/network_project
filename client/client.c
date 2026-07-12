@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <poll.h>
 
 #define MAX_LENGTH 4096
 
@@ -15,6 +16,8 @@ int main () {
     struct sockaddr_in my_addr;
     int status;
     char buffer[MAX_LENGTH];
+    char exit_buf[7];
+    struct pollfd pfds[2];
     
     sockfd = socket(PF_INET, SOCK_STREAM, 0);
 
@@ -30,19 +33,40 @@ int main () {
         return -1;
     }
 
+    pfds[0].fd = STDIN_FILENO;
+    pfds[0].events = POLLIN;
+    pfds[1].fd = sockfd;
+    pfds[1].events = POLLIN;
+
     printf("Connection established.\n");
 
     while (1) {
         int conn;
+        int poll_count;
+        char *buff_pointer;
 
-        conn = recv(sockfd, buffer, MAX_LENGTH, 0);
+        poll_count = poll(pfds, 2, -1);
+
+        if (poll_count > 0) {
+            if (pfds[1].revents & POLLIN) {
+                conn = recv(sockfd, buffer, MAX_LENGTH, 0);
+                printf("%s", buffer);
+            }
+
+            if (pfds[0].revents & POLLIN) {
+                buff_pointer = fgets(exit_buf, 7, stdin);
+            }
+        }
+
+        if (strncmp(exit_buf, "/exit", 5) == 0 || buff_pointer == NULL) {
+			printf("Exiting program...\n");
+			break;
+		}
 
         if (conn == 0) {
             printf("Lost connection to the host.\n");
             break;
         }
-        
-        printf("%s", buffer);
     }
 
     close(sockfd);
