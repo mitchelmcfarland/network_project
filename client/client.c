@@ -39,7 +39,7 @@ int main () {
     pfds[1].fd = client_fd;
     pfds[1].events = POLLIN;
 
-    printf("Connection established.\n");
+    printf("Connection established!\nYou are now chatting. Type '/exit' to quit.\n");
 
     while (1) {
         int conn;
@@ -47,6 +47,8 @@ int main () {
         char *send_buf_status;
 
         poll_count = poll(pfds, 2, -1);
+
+        printf("> ");
 
         if (poll_count > 0) {
             if (pfds[1].revents & POLLIN) {
@@ -68,7 +70,9 @@ int main () {
                     break;
                 }
 
-                printf("%s", send_buf);
+                send(client_fd, send_buf, MAX_MESSAGE_LEN - 1, 0);
+
+				printf("Message sent.\n");
 
             }
         }

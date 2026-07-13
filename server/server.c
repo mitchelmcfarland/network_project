@@ -7,27 +7,31 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <poll.h>
 
 #define MAX_MESSAGE_LEN 4096
+#define PFDS_LEN 2
 
 int main () {
 	//int yes = 1;
-    int sockfd;
+    int serv_fd;
     struct sockaddr_in my_addr;
-	char buffer[MAX_MESSAGE_LEN];
+	char send_buf[MAX_MESSAGE_LEN];
+	char recv_buf[MAX_MESSAGE_LEN];
+	struct pollfd pfds[PFDS_LEN];
     
-    sockfd = socket(PF_INET, SOCK_STREAM, 0);
+    serv_fd = socket(PF_INET, SOCK_STREAM, 0);
 
     my_addr.sin_family = AF_INET;
     my_addr.sin_port = htons(8080);
     my_addr.sin_addr.s_addr = INADDR_ANY;
     memset(my_addr.sin_zero, '\0', sizeof my_addr.sin_zero);
 
-	bind(sockfd, (struct sockaddr *)&my_addr, sizeof my_addr);
+	bind(serv_fd, (struct sockaddr *)&my_addr, sizeof my_addr);
 
 	printf("Waiting for connection...\n");
 	
-	listen(sockfd, 5);
+	listen(serv_fd, 5);
 
 	struct sockaddr_in client_addr;
 	socklen_t addr_size;
@@ -35,33 +39,58 @@ int main () {
 
 	addr_size = sizeof client_addr;
 
-	client_fd = accept(sockfd, (struct sockaddr *)&client_addr, &addr_size);
+	client_fd = accept(serv_fd, (struct sockaddr *)&client_addr, &addr_size);
+
+    pfds[0].fd = STDIN_FILENO;
+    pfds[0].events = POLLIN;
+    pfds[1].fd = client_fd;
+    pfds[1].events = POLLIN;
 
 	printf("Connection established!\nYou are now chatting. Type '/exit' to quit.\n");
 
 	while(1) {
-		char *buff_pointer;
+		char *send_buf_status;
+		int poll_count;
+		int conn;
+
+		poll_count = poll(pfds, 2, -1);
 
 		printf("> ");
 
-		buff_pointer = fgets(buffer, MAX_MESSAGE_LEN, stdin);
+		if (poll_count > 0) {
+            if (pfds[1].revents & POLLIN) {
+                conn = recv(client_fd, recv_buf, MAX_MESSAGE_LEN - 1, 0);
 
-		//buffer[strcspn(buffer, "\n") = '\0'];
+                if (conn == 0) {  //only check conn if you actually set it
+                    printf("Lost connection to the client.\n");
+                    break;
+                }
 
-		if (strncmp(buffer, "/exit", 5) == 0 || buff_pointer == NULL) {
-			printf("Exiting program...\n");
-			break;
+                printf("%s", recv_buf);
+			}
+
+			if (pfds[0].revents & POLLIN) {
+                send_buf_status = fgets(send_buf, MAX_MESSAGE_LEN - 1, stdin);
+
+                if (strncmp(send_buf, "/exit", 5) == 0 || send_buf_status == NULL) { //same thing, only check what fgets returns if you actually set it
+                    printf("Exiting program...\n");
+                    break;
+                }
+
+				send(client_fd, send_buf, MAX_MESSAGE_LEN - 1, 0);
+
+				printf("Message sent.\n");
+
+            }
 		}
 
-		send(client_fd, buffer, MAX_MESSAGE_LEN, 0);
-
-		printf("Message sent.\n");
+		//buffer[strcspn(buffer, "\n") = '\0'];
 
 	}
 	
 	close(client_fd);
 
-	close(sockfd);
+	close(serv_fd);
 
 	return 0;
 }
