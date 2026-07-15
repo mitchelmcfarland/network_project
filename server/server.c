@@ -22,16 +22,27 @@ int main () {
     
     serv_fd = socket(PF_INET, SOCK_STREAM, 0);
 
+	if (serv_fd == -1) {
+		perror("socket");
+		exit(1);
+	}
+
     my_addr.sin_family = AF_INET;
     my_addr.sin_port = htons(8080);
     my_addr.sin_addr.s_addr = INADDR_ANY;
     memset(my_addr.sin_zero, '\0', sizeof my_addr.sin_zero);
 
-	bind(serv_fd, (struct sockaddr *)&my_addr, sizeof my_addr);
+	if (bind(serv_fd, (struct sockaddr *)&my_addr, sizeof my_addr) == -1) {
+		perror("bind");
+		exit(1);
+	}
 
 	printf("Waiting for connection...\n");
 	
-	listen(serv_fd, 5);
+	if (listen(serv_fd, 5) == -1) {
+		perror("listen");
+		exit(1);
+	}
 
 	struct sockaddr_in client_addr;
 	socklen_t addr_size;
@@ -40,6 +51,11 @@ int main () {
 	addr_size = sizeof client_addr;
 
 	client_fd = accept(serv_fd, (struct sockaddr *)&client_addr, &addr_size);
+
+	if (client_fd == -1) {
+		perror("accept");
+		exit(1);
+	}
 
     pfds[0].fd = STDIN_FILENO;
     pfds[0].events = POLLIN;

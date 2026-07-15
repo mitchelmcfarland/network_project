@@ -22,6 +22,11 @@ int main () {
     
     client_fd = socket(PF_INET, SOCK_STREAM, 0);
 
+    if (client_fd == -1) {
+        perror("socket");
+        exit(1);
+    }
+
     my_addr.sin_family = AF_INET;
     my_addr.sin_port = htons(8080);
     my_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
@@ -31,7 +36,7 @@ int main () {
     
     if (status < 0) {
         perror("Connection failed");
-        return -1;
+        exit(1);
     }
 
     pfds[0].fd = STDIN_FILENO;
